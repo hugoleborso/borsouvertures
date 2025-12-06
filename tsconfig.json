@@ -6,6 +6,9 @@
     "module": "ESNext",
     "skipLibCheck": true,
     "moduleResolution": "Node",
+    "moduleDetection": "force",
+    "allowSyntheticDefaultImports": true,
+    "esModuleInterop": true,
     "allowImportingTsExtensions": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
@@ -15,7 +18,8 @@
     "baseUrl": "src",
     "paths": {
       "@/*": ["./*"]
-    }
+    },
+    "types": ["node", "vite/client", "vite-plugin-pwa/client"]
   },
   "include": ["src", "scripts"],
   "references": [{ "path": "./tsconfig.node.json" }]

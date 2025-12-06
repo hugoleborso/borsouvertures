@@ -1,8 +1,9 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { VitePWA } from 'vite-plugin-pwa';
+import { OPENINGS_CACHE_VERSION } from './src/config/openingsCacheVersion';
 
-const openingsCacheName = 'openings-cache';
+const openingsCacheName = `openings-cache-${OPENINGS_CACHE_VERSION}`;
 
 export default defineConfig({
   plugins: [
