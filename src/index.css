@@ -102,6 +102,67 @@ select {
   }
 }
 
+.selector-columns {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0.75rem;
+}
+
+@media (min-width: 900px) {
+  .selector-columns {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+}
+
+.selector-panel {
+  min-height: 240px;
+}
+
+.selector-list {
+  display: grid;
+  grid-auto-rows: 1fr;
+  gap: 0.6rem;
+  max-height: 360px;
+  overflow-y: auto;
+  padding-right: 0.25rem;
+}
+
+.selector-card {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.65rem;
+  border-radius: 10px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  background: rgba(255, 255, 255, 0.03);
+  cursor: pointer;
+  transition: border-color 120ms ease, background 120ms ease;
+}
+
+.selector-card:hover {
+  border-color: rgba(255, 255, 255, 0.25);
+  background: rgba(255, 255, 255, 0.05);
+}
+
+.selector-card.active {
+  border-color: #a47dff;
+  background: linear-gradient(135deg, rgba(164, 125, 255, 0.2), rgba(108, 99, 255, 0.08));
+}
+
+.selector-card .meta {
+  opacity: 0.8;
+  font-size: 0.85rem;
+}
+
+.selector-card .title {
+  font-weight: 600;
+}
+
+.selector-card .subtitle {
+  opacity: 0.85;
+  font-size: 0.9rem;
+}
+
 .modal-backdrop {
   position: fixed;
   inset: 0;

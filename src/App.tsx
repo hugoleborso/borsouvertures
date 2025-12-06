@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { TopBar } from '@/components/TopBar';
-import { OpeningSelector } from '@/components/OpeningSelector';
+import { OpeningFlowSelector } from '@/components/OpeningFlowSelector';
 import { SideSelector } from '@/components/SideSelector';
 import { ModeLearn } from '@/modes/ModeLearn';
 import { ModePlay } from '@/modes/ModePlay';
@@ -26,9 +26,15 @@ export default function App() {
       <TopBar mode={mode} onModeChange={setMode} boardStyle={boardStyle} onBoardStyleChange={setBoardStyle} />
 
       <div className="panel">
-        <OpeningSelector openings={openings} selection={selectionWithDefaults} onChange={setSelection} />
         <SideSelector value={side} onChange={setSide} />
       </div>
+
+      <OpeningFlowSelector
+        openings={openings}
+        selection={selectionWithDefaults}
+        onChange={setSelection}
+        boardStyle={boardStyle}
+      />
 
       {loading ? (
         <div className="panel">Loading openings...</div>

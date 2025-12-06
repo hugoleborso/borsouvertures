@@ -12,3 +12,12 @@
 - PWA: configure `vite-plugin-pwa` manifest (dark theme), service worker caching for HTML/JS/CSS/assets/openings JSON/icons; use cache-first for openings JSON and stale-while-revalidate for app shell; verify offline behavior and start_url `/`.
 - Testing and QA: unit tests for book-matching engine and build script; lightweight component tests for selectors/board interaction; manual QA checklist for both modes and theme switching.
 - Deployment: confirm `pnpm build` succeeds; document S3/CloudFront upload steps and MIME types for JSON/manifest/JS.
+
+## Next iteration: visual selector flow (openings → variations → lines)
+
+- Selector UX: replace dropdowns with scrollable lists of openings/variations/lines; each item shows name and a mini-board preview of the position before entering that scope.
+- Data prep: for each opening/variation/line, derive preview FEN from the PGN prefix (opening: before first move? variation: after moves up to variation start? line: first N moves); decide consistent slice lengths.
+- Components: build reusable MiniBoard component (static, no DnD) and list item card; three-step navigator with back/next breadcrumbs.
+- State changes: store selected opening/variation/line IDs; ensure list filtering narrows lines by selected variation and variations by selected opening; keep “All”/any opening path as needed.
+- Performance: memoize preview FENs at build time or at load time; consider precomputing previews during build-openings for fast rendering.
+- QA: verify selection narrows correctly, previews match data, and integration with Learn/Play modes remains intact.
