@@ -70,13 +70,34 @@ export function ModeLearn({ openings, selection, side, boardStyle, showMoves }: 
       syncFen();
       return;
     }
-    while (gameRef.current.history().length < selectedLine.movesUci.length) {
+    
+    // Apply opponent moves with animation
+    const applyNextOpponentMove = () => {
       const ply = gameRef.current.history().length;
+      
+      // Check if we've reached the end or it's the player's turn
+      if (ply >= selectedLine.movesUci.length) {
+        return;
+      }
+      
       const isPlayersTurn = (side === 'white' && ply % 2 === 0) || (side === 'black' && ply % 2 === 1);
-      if (isPlayersTurn) break;
-      applyUci(selectedLine.movesUci[ply]);
-    }
-    syncFen();
+      if (isPlayersTurn) {
+        return;
+      }
+      
+      // Schedule the opponent's move with a delay for animation
+      // The key is to apply the move INSIDE setTimeout, not before it
+      setTimeout(() => {
+        applyUci(selectedLine.movesUci[ply]);
+        syncFen();
+        
+        // Continue with next opponent move if needed
+        applyNextOpponentMove();
+      }, 250);
+    };
+    
+    // Start applying opponent moves
+    applyNextOpponentMove();
   }
 
   function applyUci(uci: string) {
@@ -102,20 +123,25 @@ export function ModeLearn({ openings, selection, side, boardStyle, showMoves }: 
 
     applyUci(expectedMove);
     const nextPly = gameRef.current.history().length;
+    
+    // Clear visual states
+    setIncorrectArrow(null);
+    setShowIncorrect(false);
+    setCorrectArrow(null);
+    
     if (nextPly >= selectedLine.movesUci.length) {
       syncFen();
       setShowSuccess(true);
       return true;
     }
+    
+    // Sync the player's move first, THEN schedule opponent moves
+    syncFen();
     syncToPlayerTurn();
 
     if (gameRef.current.history().length === selectedLine.movesUci.length) {
       setShowSuccess(true);
     }
-    syncFen();
-    setIncorrectArrow(null);
-    setShowIncorrect(false);
-    setCorrectArrow(null);
     return true;
   }
 
