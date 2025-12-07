@@ -27,6 +27,7 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
   const [arrows, setArrows] = useState<Arrow[]>([]);
   const [highlightSquares, setHighlightSquares] = useState<CustomSquareStyles>({});
   const [showSuccess, setShowSuccess] = useState(false);
+  const [manualArrows, setManualArrows] = useState(false);
   const boardWidth = useBoardSize();
 
   const bookState = useMemo(
@@ -45,20 +46,23 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
     setArrows([]);
     setHighlightSquares({});
     setShowSuccess(false);
+    setManualArrows(false);
   }
 
   useEffect(() => {
     if (showMoves && bookState.inBook) {
       const nextArrows = bookState.possibleNextMovesUci.map((uci) => [uci.slice(0, 2), uci.slice(2, 4)] as Arrow);
       setArrows(nextArrows);
-    } else if (!showMoves) {
+      setManualArrows(false);
+    } else if (!showMoves && !manualArrows) {
       setArrows([]);
     }
-  }, [showMoves, bookState]);
+  }, [showMoves, bookState, manualArrows]);
 
   function handleMove(sourceSquare: string, targetSquare: string): boolean {
     setHighlightSquares({});
     setArrows([]);
+    setManualArrows(false);
     setShowSuccess(false);
     const move = gameRef.current.move({ from: sourceSquare, to: targetSquare, promotion: 'q' });
     if (!move) return false;
@@ -86,7 +90,7 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
     }
 
     if (autoOpponent && state.inBook && state.candidates.length > 0) {
-      const candidate = state.candidates[0];
+      const candidate = state.candidates[Math.floor(Math.random() * state.candidates.length)];
       const ply = nextMoves.length;
       const isOppTurn = (side === 'white' && ply % 2 === 1) || (side === 'black' && ply % 2 === 0);
       const opponentMove = candidate.line.movesUci[ply];
@@ -105,6 +109,14 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
 
     syncFen();
     return true;
+  }
+
+  function revealBookMoves() {
+    const state = computeBookState(openings, selection, playedMoves, playScope);
+    const nextArrows = state.possibleNextMovesUci.map((uci) => [uci.slice(0, 2), uci.slice(2, 4)] as Arrow);
+    setArrows(nextArrows);
+    setShowOutOfBook(false);
+    setManualArrows(true);
   }
 
   const candidateCount = bookState.candidates.length;
@@ -156,13 +168,7 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
             </button>
             <button
               className="btn active"
-              onClick={() => {
-                const nextArrows = bookState.possibleNextMovesUci.map(
-                  (uci) => [uci.slice(0, 2), uci.slice(2, 4)] as Arrow
-                );
-                setArrows(nextArrows);
-                setShowOutOfBook(false);
-              }}
+              onClick={revealBookMoves}
             >
               Show Book Moves
             </button>

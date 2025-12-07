@@ -124,19 +124,17 @@ export function OpeningFlowSelector({
 
   const panels = [
     <SelectorPanel title="Openings" key="openings">
-        <SelectorCard
-          label="All openings"
-          meta={`${openings.length} families`}
-          active={mode === 'play' ? playScope.openingIds.length === 0 : openingId === ALL_KEY}
-          onClick={() => {
-            if (mode === 'play') {
+        {isPlay && (
+          <SelectorCard
+            label="All openings"
+            meta={`${openings.length} families`}
+            active={playScope.openingIds.length === 0}
+            onClick={() => {
               onPlayScopeChange({ ...playScope, openingIds: [], variationIds: [], lineIds: [] });
-            } else {
-              onChange({ openingId: ALL_KEY, variationId: ALL_KEY, lineId: ALL_KEY });
-            }
-            if (isMobile) setMobileStep('variation');
-          }}
-        />
+              if (isMobile) setMobileStep('variation');
+            }}
+          />
+        )}
         {openingsPagination.visibleItems.map((opening) => {
           const preview = openingPreviews.get(opening.id);
           const activePlay = playScope.openingIds.includes(opening.id);
@@ -175,24 +173,17 @@ export function OpeningFlowSelector({
       </SelectorPanel>,
 
     <SelectorPanel title="Variations" key="variations">
-        <SelectorCard
-          label="All variations"
-          meta={isPlay ? `${variationEntries.length} total` : selectedOpening ? `${selectedOpening.variations.length} total` : '—'}
-          active={mode === 'play' ? playScope.variationIds.length === 0 : variationId === ALL_KEY}
-          disabled={!isPlay && !selectedOpening && openingId !== ALL_KEY}
-          onClick={() => {
-            if (mode === 'play') {
+        {isPlay && (
+          <SelectorCard
+            label="All variations"
+            meta={`${variationEntries.length} total`}
+            active={playScope.variationIds.length === 0}
+            onClick={() => {
               onPlayScopeChange({ ...playScope, variationIds: [], lineIds: [] });
-            } else {
-              onChange({
-                openingId,
-                variationId: ALL_KEY,
-                lineId: ALL_KEY
-              });
-            }
-            if (isMobile) setMobileStep('line');
-          }}
-        />
+              if (isMobile) setMobileStep('line');
+            }}
+          />
+        )}
         {variationsPagination.visibleItems.map(({ opening, variation, preview }) => {
           const activePlay = playScope.variationIds.includes(variation.id);
           return (
@@ -233,31 +224,16 @@ export function OpeningFlowSelector({
       </SelectorPanel>,
 
     <SelectorPanel title="Lines" key="lines">
-        <SelectorCard
-          label="All lines"
-          meta={
-            mode === 'play'
-              ? `${lineEntries.length} lines`
-              : selectedVariation
-                ? `${selectedVariation.lines.length} lines`
-                : selectedOpening
-                  ? `${allLines.length} lines`
-                  : '—'
-          }
-          active={mode === 'play' ? (playScope.lineIds?.length ?? 0) === 0 : lineId === ALL_KEY}
-          disabled={!isPlay && !selectedOpening && openingId !== ALL_KEY}
-          onClick={() => {
-            if (mode === 'play') {
+        {isPlay && (
+          <SelectorCard
+            label="All lines"
+            meta={`${lineEntries.length} lines`}
+            active={(playScope.lineIds?.length ?? 0) === 0}
+            onClick={() => {
               onPlayScopeChange({ ...playScope, lineIds: [] });
-            } else {
-              onChange({
-                openingId,
-                variationId,
-                lineId: ALL_KEY
-              });
-            }
-          }}
-        />
+            }}
+          />
+        )}
         {linesPagination.visibleItems.map((entry) => {
           const line = entry.line;
           const preview = entry.preview;

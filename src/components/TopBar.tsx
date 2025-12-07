@@ -1,5 +1,6 @@
 import { boardThemes } from '@/theme/boardThemes';
 import type { BoardThemeId, Mode } from '@/state/useAppState';
+import { ToggleSlider } from '@/components/ToggleSlider';
 
 interface TopBarProps {
   mode: Mode;
@@ -13,14 +14,13 @@ export function TopBar({ mode, onModeChange, boardStyle, onBoardStyleChange }: T
     <header className="panel controls-row topbar">
       <div className="topbar-left">
         <div className="brand-title">Borsouvertures</div>
-        <div className="controls-row">
-          <button className={`btn ${mode === 'learn' ? 'active' : ''}`} onClick={() => onModeChange('learn')}>
-            Learn
-          </button>
-          <button className={`btn ${mode === 'play' ? 'active' : ''}`} onClick={() => onModeChange('play')}>
-            Play
-          </button>
-        </div>
+        <ToggleSlider
+          value={mode === 'play'}
+          onChange={(isPlay) => onModeChange(isPlay ? 'play' : 'learn')}
+          leftLabel="Learn"
+          rightLabel="Play"
+          ariaLabel="Toggle mode"
+        />
       </div>
       <div className="controls-row">
         <span>Board style:</span>

@@ -1,4 +1,5 @@
 import type { Side } from '@/state/useAppState';
+import { ToggleSlider } from '@/components/ToggleSlider';
 
 interface SideSelectorProps {
   value: Side;
@@ -9,14 +10,13 @@ export function SideSelector({ value, onChange }: SideSelectorProps) {
   return (
     <div className="controls-row">
       <span>Train as:</span>
-      <div className="controls-row">
-        <button className={`btn ${value === 'white' ? 'active' : ''}`} onClick={() => onChange('white')}>
-          White
-        </button>
-        <button className={`btn ${value === 'black' ? 'active' : ''}`} onClick={() => onChange('black')}>
-          Black
-        </button>
-      </div>
+      <ToggleSlider
+        value={value === 'black'}
+        onChange={(isBlack) => onChange(isBlack ? 'black' : 'white')}
+        leftLabel="White"
+        rightLabel="Black"
+        ariaLabel="Choose side"
+      />
     </div>
   );
 }

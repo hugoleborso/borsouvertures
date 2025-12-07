@@ -8,6 +8,7 @@ import { useAppState } from '@/state/useAppState';
 import { ALL_KEY, type Selection } from '@/openings/selectors';
 import { loadOpenings } from '@/openings/loadOpenings';
 import { findLine, findOpening, findVariation } from '@/openings/selectors';
+import { ToggleSlider } from '@/components/ToggleSlider';
 
 export default function App() {
   const {
@@ -42,9 +43,18 @@ export default function App() {
   const selectedVariation = findVariation(selectedOpening, selectionWithDefaults.variationId);
   const selectedLine = findLine(selectedVariation, selectionWithDefaults.lineId);
 
+  function handleModeChange(nextMode: typeof mode) {
+    if (nextMode === 'play' && mode !== 'play') {
+      // Reset play scope when leaving Learn to avoid locking Play to the last learned line.
+      setPlayScope({ openingIds: [], variationIds: [], lineIds: [] });
+      setSelection({ openingId: ALL_KEY, variationId: ALL_KEY, lineId: ALL_KEY });
+    }
+    setMode(nextMode);
+  }
+
   return (
     <div className="app-shell">
-      <TopBar mode={mode} onModeChange={setMode} boardStyle={boardStyle} onBoardStyleChange={setBoardStyle} />
+      <TopBar mode={mode} onModeChange={handleModeChange} boardStyle={boardStyle} onBoardStyleChange={setBoardStyle} />
 
       {view === 'select' && (
         <>
@@ -52,9 +62,13 @@ export default function App() {
             <SideSelector value={side} onChange={setSide} />
             {mode === 'play' && (
               <div className="controls-row" style={{ marginTop: '0.5rem' }}>
-                <button className="btn" onClick={() => setPlayAutoOpponent(!playAutoOpponent)}>
-                  {playAutoOpponent ? 'Opponent auto-plays' : 'You play both sides'}
-                </button>
+                <ToggleSlider
+                  value={playAutoOpponent}
+                  onChange={setPlayAutoOpponent}
+                  leftLabel="You play both"
+                  rightLabel="Auto opponent"
+                  ariaLabel="Auto opponent toggle"
+                />
               </div>
             )}
           </div>
@@ -82,13 +96,21 @@ export default function App() {
               <button className="btn" onClick={() => setView('select')}>
                 Change selection
               </button>
-              <button className="btn" onClick={() => setShowMoves((v) => !v)}>
-                {showMoves ? 'Hide moves' : 'Show moves'}
-              </button>
+              <ToggleSlider
+                value={showMoves}
+                onChange={setShowMoves}
+                leftLabel="Hide moves"
+                rightLabel="Show moves"
+                ariaLabel="Show moves toggle"
+              />
               {mode === 'play' && (
-                <button className="btn" onClick={() => setPlayAutoOpponent(!playAutoOpponent)}>
-                  {playAutoOpponent ? 'You play both sides' : 'Opponent auto-plays'}
-                </button>
+                <ToggleSlider
+                  value={playAutoOpponent}
+                  onChange={setPlayAutoOpponent}
+                  leftLabel="You play both"
+                  rightLabel="Auto opponent"
+                  ariaLabel="Auto opponent toggle"
+                />
               )}
             </div>
           </div>
