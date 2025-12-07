@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { ChessboardDnDProvider } from 'react-chessboard';
 import { TopBar } from '@/components/TopBar';
 import { OpeningFlowSelector } from '@/components/OpeningFlowSelector';
 import { SideSelector } from '@/components/SideSelector';
@@ -53,8 +54,9 @@ export default function App() {
   }
 
   return (
-    <div className="app-shell">
-      <TopBar mode={mode} onModeChange={handleModeChange} boardStyle={boardStyle} onBoardStyleChange={setBoardStyle} />
+    <ChessboardDnDProvider>
+      <div className="app-shell">
+        <TopBar mode={mode} onModeChange={handleModeChange} boardStyle={boardStyle} onBoardStyleChange={setBoardStyle} />
 
       {view === 'select' && (
         <>
@@ -137,6 +139,7 @@ export default function App() {
           )}
         </>
       )}
-    </div>
+      </div>
+    </ChessboardDnDProvider>
   );
 }

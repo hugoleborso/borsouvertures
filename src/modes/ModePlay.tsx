@@ -80,6 +80,38 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
     }
 
     setPlayedMoves(nextMoves);
+    
+    // Check if we should trigger auto-opponent move before checking for line end
+    if (autoOpponent && state.inBook && state.possibleNextMovesUci.length > 0) {
+      const ply = nextMoves.length;
+      const isOppTurn = (side === 'white' && ply % 2 === 1) || (side === 'black' && ply % 2 === 0);
+      if (isOppTurn) {
+        // Randomly select from all possible next moves, not just one candidate line
+        const opponentMove = state.possibleNextMovesUci[Math.floor(Math.random() * state.possibleNextMovesUci.length)];
+        setTimeout(() => {
+          gameRef.current.move({
+            from: opponentMove.slice(0, 2),
+            to: opponentMove.slice(2, 4),
+            promotion: opponentMove.slice(4) || undefined
+          });
+          const movesAfterOpponent = [...nextMoves, opponentMove];
+          setPlayedMoves(movesAfterOpponent);
+          syncFen();
+          
+          // Check if opponent's move completed the line
+          const stateAfterOpponent = computeBookState(openings, selection, movesAfterOpponent, playScope);
+          if (stateAfterOpponent.atLineEnd) {
+            setHighlightSquares({});
+            setArrows([]);
+            setShowSuccess(true);
+          }
+        }, 200);
+        syncFen();
+        return true;
+      }
+    }
+
+    // If no auto-opponent move was triggered, check if player's move ended the line
     if (state.atLineEnd) {
       setShowOutOfBook(false);
       setHighlightSquares({});
@@ -87,24 +119,6 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
       syncFen();
       setShowSuccess(true);
       return true;
-    }
-
-    if (autoOpponent && state.inBook && state.candidates.length > 0) {
-      const candidate = state.candidates[Math.floor(Math.random() * state.candidates.length)];
-      const ply = nextMoves.length;
-      const isOppTurn = (side === 'white' && ply % 2 === 1) || (side === 'black' && ply % 2 === 0);
-      const opponentMove = candidate.line.movesUci[ply];
-      if (isOppTurn && opponentMove) {
-        setTimeout(() => {
-          gameRef.current.move({
-            from: opponentMove.slice(0, 2),
-            to: opponentMove.slice(2, 4),
-            promotion: opponentMove.slice(4) || undefined
-          });
-          setPlayedMoves((prev) => [...prev, opponentMove]);
-          syncFen();
-        }, 200);
-      }
     }
 
     syncFen();
@@ -117,6 +131,39 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
     setArrows(nextArrows);
     setShowOutOfBook(false);
     setManualArrows(true);
+  }
+
+  function handleUndo() {
+    const movesToUndo = autoOpponent ? 2 : 1;
+    
+    // Don't undo if there aren't enough moves
+    if (playedMoves.length < movesToUndo) return;
+
+    // Undo moves from the chess game
+    for (let i = 0; i < movesToUndo; i++) {
+      gameRef.current.undo();
+    }
+
+    // Update played moves state
+    const newPlayedMoves = playedMoves.slice(0, -movesToUndo);
+    setPlayedMoves(newPlayedMoves);
+    
+    // Reset UI states
+    setHighlightSquares({});
+    setShowOutOfBook(false);
+    setShowSuccess(false);
+    setManualArrows(false);
+    
+    // Update arrows if showMoves is enabled
+    if (showMoves) {
+      const state = computeBookState(openings, selection, newPlayedMoves, playScope);
+      const nextArrows = state.possibleNextMovesUci.map((uci) => [uci.slice(0, 2), uci.slice(2, 4)] as Arrow);
+      setArrows(nextArrows);
+    } else {
+      setArrows([]);
+    }
+    
+    syncFen();
   }
 
   const candidateCount = bookState.candidates.length;
@@ -143,6 +190,13 @@ export function ModePlay({ openings, selection, side, boardStyle, autoOpponent, 
           <div className="controls-row">
             <button className="btn" onClick={resetGame}>
               Reset game
+            </button>
+            <button 
+              className="btn" 
+              onClick={handleUndo}
+              disabled={playedMoves.length < (autoOpponent ? 2 : 1)}
+            >
+              Undo
             </button>
           </div>
         </div>
