@@ -1,26 +1,29 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
-import { Chess, type PieceSymbol } from 'chess.js';
+import { useEffect, useMemo, useState } from 'react';
+import { type PieceSymbol } from 'chess.js';
 import type { Arrow, CustomSquareStyles, Square } from 'react-chessboard/dist/chessboard/types';
 import type { Opening } from '@/openings/types';
 import { findLine, findOpening, findVariation, ALL_KEY, type Selection } from '@/openings/selectors';
 import { BoardView } from '@/components/BoardView';
 import { Modal } from '@/components/Modal';
 import type { BoardThemeId, Side } from '@/state/useAppState';
+import { useBoardSize } from '@/hooks/useBoardSize';
+import { useChessGame } from '@/hooks/useChessGame';
 
 interface ModeLearnProps {
   openings: Opening[];
   selection: Selection;
   side: Side;
   boardStyle: BoardThemeId;
+  showMoves: boolean;
 }
 
-export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnProps) {
-  const gameRef = useRef(new Chess());
-  const [fen, setFen] = useState(gameRef.current.fen());
+export function ModeLearn({ openings, selection, side, boardStyle, showMoves }: ModeLearnProps) {
+  const { gameRef, fen, reset, syncFen } = useChessGame();
   const [incorrectArrow, setIncorrectArrow] = useState<Arrow | null>(null);
   const [correctArrow, setCorrectArrow] = useState<Arrow | null>(null);
   const [showIncorrect, setShowIncorrect] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const boardWidth = useBoardSize();
 
   const selectedLine = useMemo(() => {
     const opening = findOpening(openings, selection.openingId);
@@ -32,6 +35,19 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
     resetBoard();
   }, [selectedLine, side]);
 
+  useEffect(() => {
+    if (!selectedLine) return;
+    if (showMoves) {
+      const currentPly = gameRef.current.history().length;
+      const expectedMove = selectedLine.movesUci[currentPly];
+      if (expectedMove) {
+        setCorrectArrow([toSquare(expectedMove.slice(0, 2)), toSquare(expectedMove.slice(2, 4))]);
+      }
+    } else {
+      setCorrectArrow(null);
+    }
+  }, [showMoves, selectedLine]);
+
   const highlightSquares: CustomSquareStyles =
     incorrectArrow && showIncorrect
       ? {
@@ -41,7 +57,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
       : {};
 
   function resetBoard() {
-    gameRef.current = new Chess();
+    reset();
     setIncorrectArrow(null);
     setCorrectArrow(null);
     setShowIncorrect(false);
@@ -51,7 +67,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
 
   function syncToPlayerTurn() {
     if (!selectedLine) {
-      setFen(gameRef.current.fen());
+      syncFen();
       return;
     }
     while (gameRef.current.history().length < selectedLine.movesUci.length) {
@@ -60,7 +76,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
       if (isPlayersTurn) break;
       applyUci(selectedLine.movesUci[ply]);
     }
-    setFen(gameRef.current.fen());
+    syncFen();
   }
 
   function applyUci(uci: string) {
@@ -87,7 +103,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
     applyUci(expectedMove);
     const nextPly = gameRef.current.history().length;
     if (nextPly >= selectedLine.movesUci.length) {
-      setFen(gameRef.current.fen());
+      syncFen();
       setShowSuccess(true);
       return true;
     }
@@ -96,7 +112,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
     if (gameRef.current.history().length === selectedLine.movesUci.length) {
       setShowSuccess(true);
     }
-    setFen(gameRef.current.fen());
+    syncFen();
     setIncorrectArrow(null);
     setShowIncorrect(false);
     setCorrectArrow(null);
@@ -118,6 +134,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
             arrows={[correctArrow ?? undefined].filter(Boolean) as Arrow[]}
             highlightSquares={highlightSquares}
             boardStyleId={boardStyle}
+            boardWidth={boardWidth}
           />
         )}
       </div>
@@ -131,7 +148,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
 
       {showIncorrect && (
         <Modal title="Incorrect Move" onClose={() => setShowIncorrect(false)}>
-          <div className="controls-row" style={{ justifyContent: 'flex-end' }}>
+          <div className="controls-row modal-actions">
             <button className="btn" onClick={() => setShowIncorrect(false)}>
               Try Again
             </button>
@@ -155,7 +172,7 @@ export function ModeLearn({ openings, selection, side, boardStyle }: ModeLearnPr
 
       {showSuccess && (
         <Modal title="Line completed successfully!" onClose={() => setShowSuccess(false)}>
-          <div className="controls-row" style={{ justifyContent: 'flex-end' }}>
+          <div className="controls-row modal-actions">
             <button className="btn active" onClick={resetBoard}>
               Replay line
             </button>

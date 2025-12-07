@@ -1,8 +1,7 @@
 import { Chessboard } from 'react-chessboard';
-import type { BoardOrientation, Square } from 'react-chessboard/dist/chessboard/types';
-import { getBoardTheme } from '@/theme/boardThemes';
+import type { BoardOrientation } from 'react-chessboard/dist/chessboard/types';
+import { getBoardAppearance } from '@/theme/boardAppearance';
 import type { BoardThemeId } from '@/state/useAppState';
-import { chesscomPieces } from '@/theme/chesscomPieces';
 
 interface MiniBoardProps {
   fen: string;
@@ -11,8 +10,7 @@ interface MiniBoardProps {
 }
 
 export function MiniBoard({ fen, orientation = 'white', boardStyleId }: MiniBoardProps) {
-  const theme = getBoardTheme(boardStyleId);
-  const useCustomPieces = boardStyleId !== 'lichess';
+  const { theme, customPieces } = getBoardAppearance(boardStyleId);
   return (
     <div style={{ width: 140, height: 140 }}>
       <Chessboard
@@ -25,7 +23,7 @@ export function MiniBoard({ fen, orientation = 'white', boardStyleId }: MiniBoar
         customArrowColor={theme.arrow}
         customArrows={[]}
         customSquareStyles={{}}
-        customPieces={useCustomPieces ? chesscomPieces : undefined}
+        customPieces={customPieces}
         arePiecesDraggable={false}
         animationDuration={0}
         boardWidth={140}

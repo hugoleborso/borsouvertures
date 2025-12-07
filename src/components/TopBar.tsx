@@ -10,9 +10,9 @@ interface TopBarProps {
 
 export function TopBar({ mode, onModeChange, boardStyle, onBoardStyleChange }: TopBarProps) {
   return (
-    <header className="panel controls-row" style={{ justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
-        <div style={{ fontWeight: 700, fontSize: '1.2rem' }}>Borsouvertures</div>
+    <header className="panel controls-row topbar">
+      <div className="topbar-left">
+        <div className="brand-title">Borsouvertures</div>
         <div className="controls-row">
           <button className={`btn ${mode === 'learn' ? 'active' : ''}`} onClick={() => onModeChange('learn')}>
             Learn

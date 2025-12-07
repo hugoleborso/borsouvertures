@@ -8,7 +8,7 @@ interface SelectorPanelProps {
 export function SelectorPanel({ title, children }: SelectorPanelProps) {
   return (
     <div className="panel selector-panel">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+      <div className="panel-header">
         <h3 style={{ margin: 0 }}>{title}</h3>
       </div>
       <div className="selector-list">{children}</div>

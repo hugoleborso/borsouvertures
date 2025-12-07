@@ -19,10 +19,12 @@ export interface BookState {
 
 export function gatherCandidates(
   openings: Opening[],
-  selection: Selection
+  selection: Selection,
+  playScope?: { openingIds: string[]; variationIds: string[]; lineIds?: string[] }
 ): BookCandidate[] {
   const results: BookCandidate[] = [];
   openings.forEach((opening) => {
+    if (playScope && playScope.openingIds.length > 0 && !playScope.openingIds.includes(opening.id)) return;
     if (
       selection.openingId !== ALL_KEY &&
       selection.openingId &&
@@ -30,6 +32,7 @@ export function gatherCandidates(
     )
       return;
     opening.variations.forEach((variation) => {
+      if (playScope && playScope.variationIds.length > 0 && !playScope.variationIds.includes(variation.id)) return;
       if (
         selection.variationId !== ALL_KEY &&
         selection.variationId &&
@@ -37,6 +40,7 @@ export function gatherCandidates(
       )
         return;
       variation.lines.forEach((line) => {
+        if (playScope && playScope.lineIds && playScope.lineIds.length > 0 && !playScope.lineIds.includes(line.id)) return;
         if (
           selection.lineId !== ALL_KEY &&
           selection.lineId &&
@@ -53,9 +57,10 @@ export function gatherCandidates(
 export function computeBookState(
   openings: Opening[],
   selection: Selection,
-  playedMoves: string[]
+  playedMoves: string[],
+  playScope?: { openingIds: string[]; variationIds: string[]; lineIds?: string[] }
 ): BookState {
-  const scopedCandidates = gatherCandidates(openings, selection);
+  const scopedCandidates = gatherCandidates(openings, selection, playScope);
   const matchingCandidates = scopedCandidates.filter((candidate) =>
     playedMoves.every((move, idx) => candidate.line.movesUci[idx] === move)
   );

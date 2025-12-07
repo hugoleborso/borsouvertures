@@ -20,7 +20,9 @@ export interface LinePreview {
 }
 
 export function buildOpeningPreview(opening: Opening): OpeningPreview {
-  const line = opening.variations.find((v) => v.name.toLowerCase().includes('main'))?.lines[0] ?? opening.variations[0]?.lines[0];
+  const line =
+    opening.variations.find((v) => v.name.toLowerCase().includes("main"))?.lines[0] ??
+    opening.variations[0]?.lines[0];
   const fen = line ? playMoves(line.movesSan, 6) : new Chess().fen();
   return { openingId: opening.id, fen };
 }

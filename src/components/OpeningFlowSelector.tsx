@@ -1,170 +1,327 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { MiniBoard } from '@/components/MiniBoard';
+import { SelectorCard } from '@/components/SelectorCard';
 import { SelectorPanel } from '@/components/SelectorPanel';
+import { usePaginatedList } from '@/hooks/usePaginatedList';
+import { useIsMobile } from '@/hooks/useIsMobile';
 import { ALL_KEY, type Selection } from '@/openings/selectors';
-import type { Opening } from '@/openings/types';
 import { buildLinePreview, buildOpeningPreview, buildVariationPreview } from '@/openings/previews';
-import type { BoardThemeId } from '@/state/useAppState';
+import type { Line, Opening, Variation } from '@/openings/types';
+import type { BoardThemeId, Mode, PlayScope } from '@/state/useAppState';
 
 interface OpeningFlowSelectorProps {
   openings: Opening[];
   selection: Selection;
   onChange: (selection: Selection) => void;
   boardStyle: BoardThemeId;
+  mode: Mode;
+  playScope: PlayScope;
+  onPlayScopeChange: (scope: PlayScope) => void;
 }
 
-export function OpeningFlowSelector({ openings, selection, onChange, boardStyle }: OpeningFlowSelectorProps) {
+export function OpeningFlowSelector({
+  openings,
+  selection,
+  onChange,
+  boardStyle,
+  mode,
+  playScope,
+  onPlayScopeChange
+}: OpeningFlowSelectorProps) {
+  type PlayLineEntry = { opening: Opening; variation: Variation; line: Line; preview: ReturnType<typeof buildLinePreview> };
+  type LearnLineEntry = { line: Line; preview: ReturnType<typeof buildLinePreview> };
   const { openingId, variationId, lineId } = selection;
+  const isMobile = useIsMobile();
+  const [mobileStep, setMobileStep] = useState<'opening' | 'variation' | 'line'>('opening');
+  const PAGE_SIZE = 20;
 
-  const openingPreviews = useMemo(() => openings.map((o) => buildOpeningPreview(o)), [openings]);
-  const variationPreviews = useMemo(() => {
-    const opening = openings.find((o) => o.id === openingId);
-    if (!opening) return [];
-    return opening.variations.map((v) => buildVariationPreview(opening, v));
-  }, [openings, openingId]);
-  const linePreviews = useMemo(() => {
-    const opening = openings.find((o) => o.id === openingId);
-    const variation = opening?.variations.find((v) => v.id === variationId);
-    if (!opening || !variation) return [];
-    return variation.lines.map((l) => buildLinePreview(opening, variation, l));
-  }, [openings, openingId, variationId]);
+  const isPlay = mode === 'play';
 
-  const selectedOpening = openings.find((o) => o.id === openingId);
-  const selectedVariation = selectedOpening?.variations.find((v) => v.id === variationId);
+  const openingPreviews = useMemo(() => new Map(openings.map((o) => [o.id, buildOpeningPreview(o)])), [openings]);
+
+  const selectedOpening = !isPlay ? openings.find((o) => o.id === openingId) : undefined;
+  const selectedVariation = !isPlay ? selectedOpening?.variations.find((v) => v.id === variationId) : undefined;
+
+  const openingsForVariations =
+    isPlay && playScope.openingIds.length > 0
+      ? openings.filter((o) => playScope.openingIds.includes(o.id))
+      : !isPlay && selectedOpening
+        ? [selectedOpening]
+        : openings;
+
+  const variationEntries = useMemo(
+    () =>
+      openingsForVariations.flatMap((opening) =>
+        opening.variations.map((v) => ({
+          opening,
+          variation: v,
+          preview: buildVariationPreview(opening, v)
+        }))
+      ),
+    [openingsForVariations]
+  );
+
+  const variationsForLines =
+    isPlay && playScope.variationIds.length > 0
+      ? variationEntries.filter((ve) => playScope.variationIds.includes(ve.variation.id))
+      : variationEntries;
+
+  const lineEntries = useMemo(
+    () =>
+      variationsForLines.flatMap(({ opening, variation }) =>
+        variation.lines.map((line) => ({
+          opening,
+        variation,
+        line,
+          preview: buildLinePreview(opening, variation, line)
+        }))
+      ),
+    [variationsForLines]
+  );
 
   const allLines =
     variationId === ALL_KEY && selectedOpening
       ? selectedOpening.variations.flatMap((v) => v.lines)
       : selectedVariation?.lines ?? [];
+  const isPlayLineEntry = (entry: PlayLineEntry | LearnLineEntry): entry is PlayLineEntry => 'opening' in entry;
 
-  return (
-    <div className="selector-columns">
-      <SelectorPanel title="Openings">
+  const openingsPagination = usePaginatedList(openings, PAGE_SIZE);
+  const variationsPagination = usePaginatedList(
+    isPlay
+      ? variationEntries
+      : selectedOpening
+        ? selectedOpening.variations.map((variation) => ({
+            opening: selectedOpening,
+            variation,
+            preview: buildVariationPreview(selectedOpening, variation)
+          }))
+        : [],
+    PAGE_SIZE
+  );
+  const linesPagination = usePaginatedList<PlayLineEntry | LearnLineEntry>(
+    isPlay
+      ? lineEntries
+      : selectedOpening && selectedVariation
+        ? selectedVariation.lines.map((line) => ({
+            line,
+            preview: buildLinePreview(selectedOpening, selectedVariation, line)
+          }))
+        : [],
+    PAGE_SIZE
+  );
+
+  useEffect(() => {
+    openingsPagination.reset();
+  }, [openings, playScope.openingIds, mode]);
+
+  useEffect(() => {
+    variationsPagination.reset();
+  }, [openingId, playScope.openingIds, playScope.variationIds, mode]);
+
+  useEffect(() => {
+    linesPagination.reset();
+  }, [variationId, playScope.variationIds, playScope.lineIds, mode]);
+
+  const panels = [
+    <SelectorPanel title="Openings" key="openings">
         <SelectorCard
           label="All openings"
           meta={`${openings.length} families`}
-          active={openingId === ALL_KEY}
-          onClick={() => onChange({ openingId: ALL_KEY, variationId: ALL_KEY, lineId: ALL_KEY })}
+          active={mode === 'play' ? playScope.openingIds.length === 0 : openingId === ALL_KEY}
+          onClick={() => {
+            if (mode === 'play') {
+              onPlayScopeChange({ ...playScope, openingIds: [], variationIds: [], lineIds: [] });
+            } else {
+              onChange({ openingId: ALL_KEY, variationId: ALL_KEY, lineId: ALL_KEY });
+            }
+            if (isMobile) setMobileStep('variation');
+          }}
         />
-        {openings.map((opening) => {
-          const preview = openingPreviews.find((p) => p.openingId === opening.id);
+        {openingsPagination.visibleItems.map((opening) => {
+          const preview = openingPreviews.get(opening.id);
+          const activePlay = playScope.openingIds.includes(opening.id);
           return (
             <SelectorCard
               key={opening.id}
               label={opening.name}
               meta={`${opening.variations.length} variations`}
-              active={openingId === opening.id}
-              onClick={() =>
-                onChange({
-                  openingId: opening.id,
-                  variationId: ALL_KEY,
-                  lineId: ALL_KEY
-                })
-              }
+              active={mode === 'play' ? activePlay : openingId === opening.id}
+              onClick={() => {
+                if (mode === 'play') {
+                  const next = activePlay
+                    ? playScope.openingIds.filter((id) => id !== opening.id)
+                    : [...playScope.openingIds, opening.id];
+                  onPlayScopeChange({ ...playScope, openingIds: next });
+                } else {
+                  onChange({
+                    openingId: opening.id,
+                    variationId: ALL_KEY,
+                    lineId: ALL_KEY
+                  });
+                }
+                if (isMobile) setMobileStep('variation');
+              }}
               board={preview?.fen ? <MiniBoard fen={preview.fen} boardStyleId={boardStyle} /> : undefined}
             />
           );
         })}
-      </SelectorPanel>
+        {openingsPagination.hasMore && (
+          <div className="controls-row selector-load-more">
+            <button className="btn" onClick={openingsPagination.loadMore}>
+              Load more
+            </button>
+          </div>
+        )}
+      </SelectorPanel>,
 
-      <SelectorPanel title="Variations">
+    <SelectorPanel title="Variations" key="variations">
         <SelectorCard
           label="All variations"
-          meta={selectedOpening ? `${selectedOpening.variations.length} total` : '—'}
-          active={variationId === ALL_KEY}
-          disabled={!selectedOpening && openingId !== ALL_KEY}
-          onClick={() =>
-            onChange({
-              openingId,
-              variationId: ALL_KEY,
-              lineId: ALL_KEY
-            })
-          }
+          meta={isPlay ? `${variationEntries.length} total` : selectedOpening ? `${selectedOpening.variations.length} total` : '—'}
+          active={mode === 'play' ? playScope.variationIds.length === 0 : variationId === ALL_KEY}
+          disabled={!isPlay && !selectedOpening && openingId !== ALL_KEY}
+          onClick={() => {
+            if (mode === 'play') {
+              onPlayScopeChange({ ...playScope, variationIds: [], lineIds: [] });
+            } else {
+              onChange({
+                openingId,
+                variationId: ALL_KEY,
+                lineId: ALL_KEY
+              });
+            }
+            if (isMobile) setMobileStep('line');
+          }}
         />
-        {selectedOpening &&
-          selectedOpening.variations.map((variation) => {
-            const preview = variationPreviews.find(
-              (p) => p.openingId === selectedOpening.id && p.variationId === variation.id
-            );
-            return (
-              <SelectorCard
-                key={variation.id}
-                label={variation.name}
-                meta={`${variation.lines.length} lines`}
-                active={variationId === variation.id}
-                onClick={() =>
+        {variationsPagination.visibleItems.map(({ opening, variation, preview }) => {
+          const activePlay = playScope.variationIds.includes(variation.id);
+          return (
+            <SelectorCard
+              key={`${opening.id}-${variation.id}`}
+              label={variation.name}
+              meta={`${variation.lines.length} lines`}
+              active={mode === 'play' ? activePlay : variationId === variation.id}
+              onClick={() => {
+                if (mode === 'play') {
+                  const nextOpeningIds = playScope.openingIds.includes(opening.id)
+                    ? playScope.openingIds
+                    : [...playScope.openingIds, opening.id];
+                  const nextVariationIds = activePlay
+                    ? playScope.variationIds.filter((id) => id !== variation.id)
+                    : [...playScope.variationIds, variation.id];
+                  onPlayScopeChange({ ...playScope, openingIds: nextOpeningIds, variationIds: nextVariationIds });
+                } else {
                   onChange({
-                    openingId,
+                    openingId: opening.id,
                     variationId: variation.id,
                     lineId: ALL_KEY
-                  })
+                  });
                 }
-                board={preview?.fen ? <MiniBoard fen={preview.fen} boardStyleId={boardStyle} /> : undefined}
-              />
-            );
-          })}
-      </SelectorPanel>
+                if (isMobile) setMobileStep('line');
+              }}
+              board={preview?.fen ? <MiniBoard fen={preview.fen} boardStyleId={boardStyle} /> : undefined}
+            />
+          );
+        })}
+        {variationsPagination.hasMore && (
+          <div className="controls-row selector-load-more">
+            <button className="btn" onClick={variationsPagination.loadMore}>
+              Load more
+            </button>
+          </div>
+        )}
+      </SelectorPanel>,
 
-      <SelectorPanel title="Lines">
+    <SelectorPanel title="Lines" key="lines">
         <SelectorCard
           label="All lines"
-          meta={selectedVariation ? `${selectedVariation.lines.length} lines` : selectedOpening ? `${allLines.length} lines` : '—'}
-          active={lineId === ALL_KEY}
-          disabled={!selectedOpening && openingId !== ALL_KEY}
-          onClick={() =>
-            onChange({
-              openingId,
-              variationId,
-              lineId: ALL_KEY
-            })
+          meta={
+            mode === 'play'
+              ? `${lineEntries.length} lines`
+              : selectedVariation
+                ? `${selectedVariation.lines.length} lines`
+                : selectedOpening
+                  ? `${allLines.length} lines`
+                  : '—'
           }
+          active={mode === 'play' ? (playScope.lineIds?.length ?? 0) === 0 : lineId === ALL_KEY}
+          disabled={!isPlay && !selectedOpening && openingId !== ALL_KEY}
+          onClick={() => {
+            if (mode === 'play') {
+              onPlayScopeChange({ ...playScope, lineIds: [] });
+            } else {
+              onChange({
+                openingId,
+                variationId,
+                lineId: ALL_KEY
+              });
+            }
+          }}
         />
-        {selectedVariation &&
-          selectedVariation.lines.map((line) => {
-            const preview = linePreviews.find((p) => p.lineId === line.id);
-            return (
-              <SelectorCard
-                key={line.id}
-                label={line.name}
-                meta={`ECO ${line.eco}`}
-                active={lineId === line.id}
-                onClick={() =>
+        {linesPagination.visibleItems.map((entry) => {
+          const line = entry.line;
+          const preview = entry.preview;
+          const openingForLine = isPlayLineEntry(entry) ? entry.opening : undefined;
+          const variationForLine = isPlayLineEntry(entry) ? entry.variation : undefined;
+          const activePlay = playScope.lineIds?.includes(line.id) ?? false;
+          return (
+            <SelectorCard
+              key={`${preview ? preview.variationId ?? variationId : variationId}-${line.id}`}
+              label={line.name}
+              meta={`ECO ${line.eco}`}
+              active={mode === 'play' ? activePlay : lineId === line.id}
+              onClick={() => {
+                if (mode === 'play') {
+                  const nextOpeningIds =
+                    openingForLine && !playScope.openingIds.includes(openingForLine.id)
+                      ? [...playScope.openingIds, openingForLine.id]
+                      : playScope.openingIds;
+                  const nextVariationIds =
+                    variationForLine && !playScope.variationIds.includes(variationForLine.id)
+                      ? [...playScope.variationIds, variationForLine.id]
+                      : playScope.variationIds;
+                  const next = activePlay
+                    ? (playScope.lineIds ?? []).filter((id) => id !== line.id)
+                    : [...(playScope.lineIds ?? []), line.id];
+                  onPlayScopeChange({ ...playScope, openingIds: nextOpeningIds, variationIds: nextVariationIds, lineIds: next });
+                } else {
                   onChange({
                     openingId,
                     variationId,
                     lineId: line.id
-                  })
+                  });
                 }
-                board={preview?.fen ? <MiniBoard fen={preview.fen} boardStyleId={boardStyle} /> : undefined}
-              />
-            );
-          })}
+              }}
+              board={preview?.fen ? <MiniBoard fen={preview.fen} boardStyleId={boardStyle} /> : undefined}
+            />
+          );
+        })}
+        {linesPagination.hasMore && (
+          <div className="controls-row selector-load-more">
+            <button className="btn" onClick={linesPagination.loadMore}>
+              Load more
+            </button>
+          </div>
+        )}
       </SelectorPanel>
-    </div>
-  );
-}
+  ];
 
-interface SelectorCardProps {
-  label: string;
-  meta?: string;
-  board?: React.ReactNode;
-  active?: boolean;
-  disabled?: boolean;
-  onClick: () => void;
-}
+  if (!isMobile) {
+    return <div className="selector-columns">{panels}</div>;
+  }
 
-function SelectorCard({ label, meta, board, active, disabled, onClick }: SelectorCardProps) {
   return (
-    <div
-      className={`selector-card ${active ? 'active' : ''} ${disabled ? 'disabled' : ''}`}
-      style={disabled ? { opacity: 0.5, pointerEvents: 'none' } : undefined}
-      onClick={onClick}
-    >
-      {board}
-      <div>
-        <div className="title">{label}</div>
-        {meta && <div className="meta">{meta}</div>}
+    <div className="selector-columns">
+      <div className="selector-back">
+        {mobileStep !== 'opening' && (
+          <button className="btn" onClick={() => setMobileStep(mobileStep === 'line' ? 'variation' : 'opening')}>
+            Back
+          </button>
+        )}
       </div>
+      {mobileStep === 'opening' && panels[0]}
+      {mobileStep === 'variation' && panels[1]}
+      {mobileStep === 'line' && panels[2]}
     </div>
   );
 }
