@@ -1,0 +1,687 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>404 – Checkmate</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root {
+      --bg: #050608;
+      --accent: #f4c26b;
+      --accent-soft: #f4e1b2;
+      --light: #f9f5e9;
+      --dark: #181a20;
+      --square-light: #f0d9b5;
+      --square-dark: #b58863;
+      --danger: #ff5c5c;
+      --muted: #9aa0b5;
+      --shadow-soft: 0 18px 45px rgba(0, 0, 0, 0.6);
+      --radius-lg: 22px;
+      --radius-pill: 999px;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: radial-gradient(circle at top, #171b28 0, #050608 55%, #000 100%);
+      color: var(--light);
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+      padding: 16px;
+    }
+
+    .glow-orb {
+      position: fixed;
+      width: 420px;
+      height: 420px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(244, 194, 107, 0.16), transparent 70%);
+      top: -100px;
+      right: -40px;
+      z-index: 0;
+      pointer-events: none;
+      filter: blur(2px);
+    }
+
+    .container {
+      position: relative;
+      z-index: 1;
+      max-width: 960px;
+      width: 100%;
+      display: grid;
+      grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr);
+      gap: 32px;
+      background: linear-gradient(135deg, rgba(19, 22, 33, 0.98), rgba(8, 9, 14, 0.98));
+      border-radius: 28px;
+      padding: 28px 26px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(244, 194, 107, 0.12);
+      backdrop-filter: blur(16px);
+    }
+
+    @media (max-width: 800px) {
+      .container {
+        grid-template-columns: 1fr;
+        padding: 22px 18px;
+        gap: 24px;
+      }
+    }
+
+    .left {
+      display: flex;
+      flex-direction: column;
+      gap: 20px;
+      justify-content: center;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      font-size: 12px;
+      letter-spacing: 0.16em;
+      text-transform: uppercase;
+      color: var(--muted);
+    }
+
+    .eyebrow span.dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 999px;
+      background: var(--danger);
+      box-shadow: 0 0 12px rgba(255, 92, 92, 0.7);
+    }
+
+    .code-tag {
+      padding: 4px 9px;
+      border-radius: 999px;
+      background: rgba(244, 194, 107, 0.08);
+      border: 1px solid rgba(244, 194, 107, 0.3);
+      color: var(--accent-soft);
+      font-weight: 500;
+      font-size: 11px;
+    }
+
+    h1 {
+      font-size: clamp(2.7rem, 5vw, 3.2rem);
+      line-height: 1.05;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      gap: 10px;
+    }
+
+    h1 .big-404 {
+      font-weight: 800;
+      letter-spacing: 0.08em;
+      color: var(--accent);
+      text-shadow:
+        0 0 12px rgba(244, 194, 107, 0.4),
+        0 0 32px rgba(0, 0, 0, 0.95);
+    }
+
+    h1 .title-text {
+      color: var(--light);
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      font-size: 0.98rem;
+      line-height: 1.6;
+      max-width: 460px;
+    }
+
+    .subtitle strong {
+      color: var(--accent-soft);
+      font-weight: 600;
+    }
+
+    .actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-top: 8px;
+    }
+
+    .btn {
+      border-radius: var(--radius-pill);
+      padding: 10px 18px;
+      font-size: 0.94rem;
+      font-weight: 600;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      cursor: pointer;
+      border: 1px solid transparent;
+      background: transparent;
+      color: var(--light);
+      text-decoration: none;
+      transition: transform 0.14s ease, box-shadow 0.14s ease, background 0.14s ease, border-color 0.14s ease, color 0.14s ease;
+    }
+
+    .btn-primary {
+      background: linear-gradient(135deg, var(--accent), #ffd78a);
+      color: #1a1407;
+      box-shadow: 0 10px 26px rgba(0, 0, 0, 0.7);
+    }
+
+    .btn-primary:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 16px 30px rgba(0, 0, 0, 0.85);
+      filter: brightness(1.02);
+    }
+
+    .btn-ghost {
+      border-color: rgba(244, 194, 107, 0.4);
+      background: rgba(10, 12, 18, 0.8);
+    }
+
+    .btn-ghost:hover {
+      background: rgba(244, 194, 107, 0.08);
+      border-color: rgba(244, 194, 107, 0.7);
+      transform: translateY(-1px);
+    }
+
+    .btn span.icon {
+      font-size: 1rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .tip {
+      margin-top: 12px;
+      font-size: 0.8rem;
+      color: var(--muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tip-badge {
+      padding: 3px 8px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      background: rgba(103, 194, 155, 0.09);
+      border: 1px solid rgba(103, 194, 155, 0.5);
+      color: #a6ffd4;
+    }
+
+    /* Board side */
+    .right {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .board-card {
+      position: relative;
+      width: min(360px, 100%);
+      border-radius: var(--radius-lg);
+      background: radial-gradient(circle at top, #242738 0, #070811 65%);
+      padding: 18px 18px 20px;
+      box-shadow: var(--shadow-soft);
+      border: 1px solid rgba(244, 194, 107, 0.16);
+      overflow: hidden;
+    }
+
+    .board-card::before {
+      content: "";
+      position: absolute;
+      inset: -2px;
+      border-radius: inherit;
+      padding: 1px;
+      background: linear-gradient(
+        140deg,
+        rgba(244, 194, 107, 0.5),
+        transparent 28%,
+        rgba(120, 220, 180, 0.35),
+        transparent 70%
+      );
+      -webkit-mask:
+        linear-gradient(#000 0 0) content-box,
+        linear-gradient(#000 0 0);
+      -webkit-mask-composite: xor;
+      mask-composite: exclude;
+      opacity: 0.4;
+      pointer-events: none;
+    }
+
+    .board-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+      font-size: 0.78rem;
+      color: var(--muted);
+    }
+
+    .board-header-left {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .avatar {
+      width: 22px;
+      height: 22px;
+      border-radius: 999px;
+      background: linear-gradient(135deg, #0f141f, #21283b);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      color: var(--accent-soft);
+      border: 1px solid rgba(244, 194, 107, 0.4);
+    }
+
+    .name-label {
+      font-weight: 500;
+      color: var(--light);
+    }
+
+    .elo-pill {
+      padding: 3px 7px;
+      border-radius: 999px;
+      background: rgba(244, 194, 107, 0.12);
+      border: 1px solid rgba(244, 194, 107, 0.5);
+      font-size: 0.7rem;
+      color: var(--accent-soft);
+    }
+
+    .board-header-right {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .status-pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(255, 92, 92, 0.14);
+      border: 1px solid rgba(255, 92, 92, 0.7);
+      color: #ffcaca;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+    }
+
+    .clock {
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      padding: 4px 7px;
+      border-radius: 8px;
+      background: rgba(0, 0, 0, 0.35);
+      border: 1px solid rgba(255, 255, 255, 0.05);
+      color: var(--accent-soft);
+    }
+
+    .board-wrapper {
+      position: relative;
+      border-radius: 18px;
+      overflow: hidden;
+      box-shadow:
+        0 10px 30px rgba(0, 0, 0, 0.9),
+        0 0 0 1px rgba(0, 0, 0, 0.8);
+    }
+
+    .board {
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      display: grid;
+      grid-template-columns: repeat(8, 1fr);
+      grid-template-rows: repeat(8, 1fr);
+      border: 1px solid rgba(0, 0, 0, 0.7);
+      background: #15161b;
+    }
+
+    .square {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: clamp(1.2rem, 1.6vw + 0.8rem, 1.55rem);
+      font-weight: 500;
+      position: relative;
+      transition: background 0.18s ease, transform 0.12s ease;
+    }
+
+    .square.dark {
+      background: var(--square-dark);
+    }
+
+    .square.light {
+      background: var(--square-light);
+    }
+
+    /* Highlighted path squares */
+    .square.highlight {
+      box-shadow: inset 0 0 0 3px rgba(120, 220, 180, 0.6);
+      position: relative;
+    }
+
+    .square.highlight::after {
+      content: "";
+      position: absolute;
+      width: 30%;
+      height: 30%;
+      border-radius: 999px;
+      background: rgba(120, 220, 180, 0.72);
+      box-shadow: 0 0 14px rgba(120, 220, 180, 0.8);
+    }
+
+    .square.ghost {
+      opacity: 0.32;
+    }
+
+    .piece {
+      transform: translateY(0);
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.55);
+    }
+
+    .piece.white {
+      color: #ffffff;
+    }
+
+    .piece.black {
+      color: #2f323a;
+    }
+
+    .piece.movable {
+      animation: hoverPiece 1.4s ease-in-out infinite alternate;
+    }
+
+    .check-square {
+      background: radial-gradient(circle, #ff9a9a 0, #e06262 40%, #b54040 100%);
+      box-shadow: inset 0 0 0 2px rgba(0, 0, 0, 0.8);
+    }
+
+    @keyframes hoverPiece {
+      from {
+        transform: translateY(0);
+      }
+      to {
+        transform: translateY(-3px);
+      }
+    }
+
+    .board-overlay-label {
+      position: absolute;
+      right: 10px;
+      bottom: 10px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      font-size: 0.7rem;
+      background: rgba(0, 0, 0, 0.6);
+      color: var(--accent-soft);
+      display: inline-flex;
+      gap: 6px;
+      align-items: center;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      backdrop-filter: blur(10px);
+    }
+
+    .board-overlay-label span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(120, 220, 180, 0.9);
+      box-shadow: 0 0 6px rgba(120, 220, 180, 0.9);
+    }
+
+    .board-footer {
+      margin-top: 14px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .line-label {
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 0.78rem;
+      color: var(--accent-soft);
+    }
+
+    .pills {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .pill {
+      padding: 3px 8px;
+      border-radius: 999px;
+      background: rgba(0, 0, 0, 0.5);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-size: 0.7rem;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+
+    .pill span.dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 92, 92, 0.9);
+      box-shadow: 0 0 6px rgba(255, 92, 92, 0.9);
+    }
+
+    .pill-safe span.dot {
+      background: rgba(120, 220, 180, 0.9);
+      box-shadow: 0 0 6px rgba(120, 220, 180, 0.9);
+    }
+
+    .shortcuts {
+      font-size: 0.72rem;
+      color: var(--muted);
+      opacity: 0.8;
+    }
+
+    .shortcut-key {
+      padding: 2px 6px;
+      border-radius: 6px;
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      background: rgba(0, 0, 0, 0.6);
+      font-family: "SF Mono", Menlo, monospace;
+      font-size: 0.72rem;
+      margin: 0 2px;
+    }
+
+    @media (max-width: 450px) {
+      .board-card {
+        padding: 16px 12px 16px;
+      }
+
+      .board-overlay-label {
+        right: 7px;
+        bottom: 7px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="glow-orb"></div>
+
+  <main class="container">
+    <section class="left" aria-label="404 message">
+      <div class="eyebrow">
+        <span class="dot"></span>
+        <span>Route not found</span>
+        <span class="code-tag">&lt;status code="404" /&gt;</span>
+      </div>
+
+      <h1>
+        <span class="big-404">404</span>
+        <span class="title-text">Checkmated Page</span>
+      </h1>
+
+      <p class="subtitle">
+        The move you played led to a <strong>missing page</strong>.  
+        It’s like trying to castle while in check – bold, but not exactly legal.
+      </p>
+
+      <div class="actions">
+        <a href="/" class="btn btn-primary">
+          <span class="icon">♖</span>
+          <span>Back to Home Board</span>
+        </a>
+        <button class="btn btn-ghost" type="button" onclick="window.history.back()">
+          <span class="icon">↩</span>
+          <span>Undo Last Move</span>
+        </button>
+      </div>
+
+      <div class="tip">
+        <span class="tip-badge">Hint</span>
+        <span>Double-check the URL or try starting again from the home position.</span>
+      </div>
+    </section>
+
+    <section class="right" aria-label="Chessboard visualization">
+      <div class="board-card">
+        <header class="board-header">
+          <div class="board-header-left">
+            <div class="avatar">♔</div>
+            <div>
+              <div class="name-label">You vs. The Server</div>
+              <div style="font-size:0.72rem;color:var(--muted);">Rapid • 404 error line</div>
+            </div>
+          </div>
+          <div class="board-header-right">
+            <div class="status-pill">Checkmate</div>
+            <div class="clock">00:00</div>
+          </div>
+        </header>
+
+        <div class="board-wrapper">
+          <div class="board" aria-hidden="true">
+            <!-- Rank 8 -->
+            <div class="square dark ghost"><span class="piece black">♜</span></div>
+            <div class="square light ghost"><span class="piece black">♞</span></div>
+            <div class="square dark ghost"><span class="piece black">♝</span></div>
+            <div class="square light ghost"><span class="piece black">♛</span></div>
+            <div class="square dark ghost"><span class="piece black">♚</span></div>
+            <div class="square light ghost"><span class="piece black">♝</span></div>
+            <div class="square dark ghost"><span class="piece black">♞</span></div>
+            <div class="square light ghost"><span class="piece black">♜</span></div>
+            <!-- Rank 7 -->
+            <div class="square light ghost"><span class="piece black">♟</span></div>
+            <div class="square dark ghost"><span class="piece black">♟</span></div>
+            <div class="square light ghost"><span class="piece black">♟</span></div>
+            <div class="square dark ghost"><span class="piece black">♟</span></div>
+            <div class="square light ghost"><span class="piece black">♟</span></div>
+            <div class="square dark ghost"><span class="piece black">♟</span></div>
+            <div class="square light ghost"><span class="piece black">♟</span></div>
+            <div class="square dark ghost ghost"><span class="piece black">♟</span></div>
+            <!-- Rank 6 -->
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <!-- Rank 5 -->
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark highlight"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <!-- Rank 4 -->
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark highlight"></div>
+            <div class="square light"></div>
+            <div class="square dark highlight"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <!-- Rank 3 -->
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <div class="square light"></div>
+            <div class="square dark"></div>
+            <!-- Rank 2 (White pieces) -->
+            <div class="square dark"><span class="piece white">♙</span></div>
+            <div class="square light"><span class="piece white">♙</span></div>
+            <div class="square dark"><span class="piece white">♙</span></div>
+            <div class="square light"><span class="piece white">♙</span></div>
+            <div class="square dark"><span class="piece white">♙</span></div>
+            <div class="square light"><span class="piece white">♙</span></div>
+            <div class="square dark"><span class="piece white">♙</span></div>
+            <div class="square light"><span class="piece white">♙</span></div>
+            <!-- Rank 1 (White king trapped in "404" motif) -->
+            <div class="square light"><span class="piece white">♖</span></div>
+            <div class="square dark"><span class="piece white">♘</span></div>
+            <div class="square light check-square">
+              <span class="piece white movable">♔</span>
+            </div>
+            <div class="square dark"></div>
+            <div class="square light check-square">
+              <span class="piece black">♛</span>
+            </div>
+            <div class="square dark"></div>
+            <div class="square light"><span class="piece white">♗</span></div>
+            <div class="square dark"><span class="piece white">♖</span></div>
+          </div>
+
+          <div class="board-overlay-label">
+            <span class="dot"></span>
+            <span>Line: 4-0-4</span>
+          </div>
+        </div>
+
+        <footer class="board-footer">
+          <div>
+            <div class="line-label">… 1. Qh1#</div>
+            <div class="shortcuts">
+              Press <span class="shortcut-key">H</span> to go home
+            </div>
+          </div>
+          <div class="pills">
+            <div class="pill pill-safe">
+              <span class="dot"></span>
+              <span>Safe move: Return home</span>
+            </div>
+          </div>
+        </footer>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    // Keyboard shortcut: H to go home, Backspace to go back
+    window.addEventListener("keydown", function (event) {
+      const key = event.key.toLowerCase();
+      if (key === "h") {
+        window.location.href = "/";
+      } else if (key === "backspace") {
+        event.preventDefault();
+        window.history.back();
+      }
+    });
+  </script>
+</body>
+</html>
